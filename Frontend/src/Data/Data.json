@@ -1,0 +1,226 @@
+[
+  {
+    "loc": "Savitribai Phule Pune University",
+    "category": "university",
+    "area": "Aundh",
+    "lat": 18.551235,
+    "long": 73.826107
+  },
+  {
+    "loc": "Baburaoji Gholap College",
+    "category": "college",
+    "area": "Sangvi",
+    "lat": 18.5773,
+    "long": 73.8093
+  },
+  {
+    "loc": "COEP Technological University",
+    "category": "university",
+    "area": "Shivajinagar",
+    "lat": 18.5306,
+    "long": 73.8568
+  },
+  {
+    "loc": "Fergusson College",
+    "category": "college",
+    "area": "Shivajinagar",
+    "lat": 18.5241,
+    "long": 73.8388
+  },
+  {
+    "loc": "MIT World Peace University",
+    "category": "university",
+    "area": "Kothrud",
+    "lat": 18.518202,
+    "long": 73.815271
+  },
+  {
+    "loc": "AISSMS College of Engineering",
+    "category": "college",
+    "area": "Shivajinagar",
+    "lat": 18.53104,
+    "long": 73.86576
+  },
+  {
+    "loc": "Pune Institute of Computer Technology",
+    "category": "college",
+    "area": "Dhankawadi",
+    "lat": 18.457842,
+    "long": 73.850825
+  },
+  {
+    "loc": "Vishwakarma University",
+    "category": "university",
+    "area": "Kondhwa",
+    "lat": 18.460316,
+    "long": 73.8836
+  },
+  {
+    "loc": "Bharati Vidyapeeth",
+    "category": "university",
+    "area": "Dhankawadi",
+    "lat": 18.457752,
+    "long": 73.854456
+  },
+  {
+    "loc": "Indian Institute of Science Education and Research",
+    "category": "institute",
+    "area": "Pashan",
+    "lat": 18.5454,
+    "long": 73.807152
+  },
+  {
+    "loc": "Gokhale Institute of Politics and Economics",
+    "category": "university",
+    "area": "Deccan Gymkhana",
+    "lat": 18.520869,
+    "long": 73.832771
+  },
+  {
+    "loc": "SNDT Women's University",
+    "category": "university",
+    "area": "Karve Road",
+    "lat": 18.50887,
+    "long": 73.827408
+  },
+  {
+    "loc": "Tilak Maharashtra Vidyapeeth",
+    "category": "university",
+    "area": "Gultekdi",
+    "lat": 18.493463,
+    "long": 73.86493
+  },
+  {
+    "loc": "JSPM University",
+    "category": "university",
+    "area": "Wagholi",
+    "lat": 18.585857,
+    "long": 74.002797
+  },
+  {
+    "loc": "Government Polytechnic Pune",
+    "category": "college",
+    "area": "Shivajinagar",
+    "lat": 18.538307,
+    "long": 73.832656
+  },
+  {
+    "loc": "Brihan Maharashtra College of Commerce",
+    "category": "college",
+    "area": "Shivajinagar",
+    "lat": 18.523,
+    "long": 73.842
+  },
+  {
+    "loc": "Modern College of Engineering",
+    "category": "college",
+    "area": "Shivajinagar",
+    "lat": 18.528,
+    "long": 73.842
+  },
+  {
+    "loc": "Symbiosis Institute of Computer Studies and Research",
+    "category": "college",
+    "area": "Model Colony",
+    "lat": 18.532,
+    "long": 73.837
+  },
+  {
+    "loc": "Cummins College of Engineering for Women",
+    "category": "college",
+    "area": "Karvenagar",
+    "lat": 18.487,
+    "long": 73.819
+  },
+  {
+    "loc": "Vishwakarma Institute of Technology",
+    "category": "college",
+    "area": "Bibwewadi",
+    "lat": 18.469,
+    "long": 73.867
+  },
+  {
+    "loc": "Vishwakarma Institute of Information Technology",
+    "category": "college",
+    "area": "Kondhwa",
+    "lat": 18.456,
+    "long": 73.871
+  },
+  {
+    "loc": "Poona College of Arts Science and Commerce",
+    "category": "college",
+    "area": "Camp",
+    "lat": 18.5,
+    "long": 73.879
+  },
+  {
+    "loc": "Dhole Patil College of Engineering",
+    "category": "college",
+    "area": "Wagholi",
+    "lat": 18.579,
+    "long": 74.012
+  },
+  {
+    "loc": "Bharati Vidyapeeth College of Engineering",
+    "category": "college",
+    "area": "Dhankawadi",
+    "lat": 18.458,
+    "long": 73.855
+  },
+  {
+    "loc": "MIT College of Engineering",
+    "category": "college",
+    "area": "Kothrud",
+    "lat": 18.518,
+    "long": 73.815
+  },
+  {
+    "loc": "Symbiosis School for Liberal Arts",
+    "category": "college",
+    "area": "Viman Nagar",
+    "lat": 18.575612,
+    "long": 73.90799
+  },
+  {
+    "loc": "Suryadatta College of Management",
+    "category": "college",
+    "area": "Bavdhan",
+    "lat": 18.52029,
+    "long": 73.77313
+  },
+  {
+    "loc": "College of Military Engineering",
+    "category": "college",
+    "area": "Dapodi",
+    "lat": 18.584,
+    "long": 73.834
+  },
+  {
+    "loc": "Nowrosjee Wadia College",
+    "category": "college",
+    "area": "Sangamvadi",
+    "lat": 18.54,
+    "long": 73.879
+  },
+  {
+    "loc": "Abasaheb Garware College",
+    "category": "college",
+    "area": "Karve Road",
+    "lat": 18.51,
+    "long": 73.836
+  },
+  {
+    "loc": "Sir Parashurambhau College",
+    "category": "college",
+    "area": "Tilak Road",
+    "lat": 18.511,
+    "long": 73.85
+  },
+  {
+    "loc": "Delhi University",
+    "category": "university",
+    "area": "Delhi center",
+    "lat": 28.6139,
+    "long": 77.2090
+  }
+]

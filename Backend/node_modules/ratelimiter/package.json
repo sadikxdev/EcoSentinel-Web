@@ -1,0 +1,27 @@
+{
+  "name": "ratelimiter",
+  "version": "3.4.1",
+  "repository": "visionmedia/node-ratelimiter",
+  "description": "abstract rate limiter backed by redis",
+  "keywords": [
+    "rate",
+    "ratelimit",
+    "limiter",
+    "limit"
+  ],
+  "scripts": {
+    "test": "mocha --exit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "async": "3.1.0",
+    "ioredis": "4.14.1",
+    "mocha": "*",
+    "redis": "2.8.0",
+    "should": "*"
+  },
+  "license": "MIT",
+  "contributors": [
+    "Francois-Guillaume Ribreau <npm@fgribreau.com>"
+  ]
+}
