@@ -7,12 +7,11 @@ function Display({ displayData, onClose }) {
   const hasClosed = useRef(false);
 
   const {
-    apiData: passedApiData,
+    apiData,
     weatherData,
     locationName,
   } = displayData || {};
 
-  const [apiData, setApiData] = useState(passedApiData || null);
   const [images, setImages] = useState([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -126,10 +125,6 @@ function Display({ displayData, onClose }) {
   };
 
   useEffect(() => {
-    setApiData(passedApiData || null);
-  }, [passedApiData]);
-
-  useEffect(() => {
     const getImages = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -214,10 +209,16 @@ function Display({ displayData, onClose }) {
       }
     };
 
-    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener(
+      "fullscreenchange",
+      handleFullscreenChange,
+    );
 
     return () => {
-      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener(
+        "fullscreenchange",
+        handleFullscreenChange,
+      );
     };
   }, [onClose]);
 
@@ -229,23 +230,31 @@ function Display({ displayData, onClose }) {
     };
   }, []);
 
-  const currentWeatherIndex = weatherData?.hourly?.time?.length
-    ? Math.max(
-        0,
-        weatherData.hourly.time.findIndex(
-          (time) => new Date(time) >= new Date(),
-        ),
-      )
-    : 0;
+  const currentWeatherIndex =
+    weatherData?.hourly?.time?.length
+      ? Math.max(
+          0,
+          weatherData.hourly.time.findIndex(
+            (time) => new Date(time) >= new Date(),
+          ),
+        )
+      : 0;
 
-  const currentWeather = weatherData?.hourly?.time?.length
-    ? {
-        temperature: weatherData.hourly.temperature_2m[currentWeatherIndex],
-        humidity: weatherData.hourly.relative_humidity_2m[currentWeatherIndex],
-        precipitation: weatherData.hourly.precipitation[currentWeatherIndex],
-        windSpeed: weatherData.hourly.wind_speed_10m[currentWeatherIndex],
-      }
-    : null;
+  const currentWeather =
+    weatherData?.hourly?.time?.length
+      ? {
+          temperature:
+            weatherData.hourly.temperature_2m[currentWeatherIndex],
+          humidity:
+            weatherData.hourly.relative_humidity_2m[
+              currentWeatherIndex
+            ],
+          precipitation:
+            weatherData.hourly.precipitation[currentWeatherIndex],
+          windSpeed:
+            weatherData.hourly.wind_speed_10m[currentWeatherIndex],
+        }
+      : null;
 
   const slides = [];
 
@@ -289,6 +298,12 @@ function Display({ displayData, onClose }) {
       clearInterval(interval);
     };
   }, [isFullscreen, slides.length]);
+
+  useEffect(() => {
+    if (currentIndex >= slides.length && slides.length > 0) {
+      setCurrentIndex(0);
+    }
+  }, [currentIndex, slides.length]);
 
   const showStopButtonTemporarily = () => {
     setShowStopButton(true);
@@ -337,7 +352,10 @@ function Display({ displayData, onClose }) {
       {isFullscreen && (
         <div className="display-mode">
           {showStopButton && (
-            <button className="stop-display-btn" onClick={stopDisplay}>
+            <button
+              className="stop-display-btn"
+              onClick={stopDisplay}
+            >
               Stop Display
             </button>
           )}
@@ -449,12 +467,18 @@ function Display({ displayData, onClose }) {
 
                 <div
                   className={`parameter-card ${getLevel(
-                    currentSlide.data.current.aerosol_optical_depth,
+                    currentSlide.data.current
+                      .aerosol_optical_depth,
                     "aod",
                   )}`}
                 >
                   <h3>Aerosol Optical Depth</h3>
-                  <p>{currentSlide.data.current.aerosol_optical_depth}</p>
+                  <p>
+                    {
+                      currentSlide.data.current
+                        .aerosol_optical_depth
+                    }
+                  </p>
                 </div>
 
                 <div
@@ -476,7 +500,9 @@ function Display({ displayData, onClose }) {
                       )}`}
                     >
                       <h3>Temperature</h3>
-                      <p>{currentWeather.temperature} °C</p>
+                      <p>
+                        {currentWeather.temperature} °C
+                      </p>
                     </div>
 
                     <div
@@ -486,7 +512,9 @@ function Display({ displayData, onClose }) {
                       )}`}
                     >
                       <h3>Humidity</h3>
-                      <p>{currentWeather.humidity} %</p>
+                      <p>
+                        {currentWeather.humidity} %
+                      </p>
                     </div>
 
                     <div
@@ -496,7 +524,9 @@ function Display({ displayData, onClose }) {
                       )}`}
                     >
                       <h3>Precipitation</h3>
-                      <p>{currentWeather.precipitation} mm</p>
+                      <p>
+                        {currentWeather.precipitation} mm
+                      </p>
                     </div>
 
                     <div
@@ -506,7 +536,9 @@ function Display({ displayData, onClose }) {
                       )}`}
                     >
                       <h3>Wind Speed</h3>
-                      <p>{currentWeather.windSpeed} km/h</p>
+                      <p>
+                        {currentWeather.windSpeed} km/h
+                      </p>
                     </div>
                   </>
                 )}
@@ -518,12 +550,16 @@ function Display({ displayData, onClose }) {
             <div className="image-display">
               <img
                 src={currentSlide.data.image_url}
-                alt={currentSlide.data.original_name || "Uploaded image"}
+                alt={
+                  currentSlide.data.original_name ||
+                  "Uploaded image"
+                }
                 onError={(e) => {
                   console.error(
                     "Image failed to load:",
                     currentSlide.data.image_url,
                   );
+
                   e.currentTarget.style.display = "none";
                 }}
               />
