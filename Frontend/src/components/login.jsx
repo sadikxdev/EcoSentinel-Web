@@ -29,7 +29,7 @@ function Login() {
   const navigate = useNavigate();
 
   const filteredLocations = Data.filter((item) =>
-    item.loc.toLowerCase().includes(locationSearch.toLowerCase())
+    item.loc.toLowerCase().includes(locationSearch.toLowerCase()),
   );
 
   useEffect(() => {
@@ -67,7 +67,7 @@ function Login() {
           body: JSON.stringify({
             email: email.trim(),
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -111,7 +111,7 @@ function Login() {
             email: email.trim(),
             otp: otp.trim(),
           }),
-        }
+        },
       );
 
       const data = await response.json();
@@ -172,7 +172,9 @@ function Login() {
     }
 
     if (!verificationToken) {
-      setMessage("Email verification is missing. Please verify your email again.");
+      setMessage(
+        "Email verification is missing. Please verify your email again.",
+      );
       return;
     }
 
@@ -191,16 +193,13 @@ function Login() {
         longitude: Number(selectedLocation.longitude),
       };
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/register",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(registrationData),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(registrationData),
+      });
 
       const data = await response.json();
 
@@ -242,19 +241,16 @@ function Login() {
       setLoading(true);
       setMessage("");
 
-      const response = await fetch(
-        "http://localhost:5000/api/auth/login",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email: email.trim(),
-            password,
-          }),
-        }
-      );
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
 
       const data = await response.json();
 
@@ -346,7 +342,7 @@ function Login() {
               className="switch-btn"
               onClick={switchToRegister}
             >
-              Not register yet? Register
+              Don't have an account? <strong>Sign up</strong>
             </button>
           </>
         ) : (
@@ -437,9 +433,7 @@ function Login() {
                           </div>
                         ))
                       ) : (
-                        <div className="no-result">
-                          No location found
-                        </div>
+                        <div className="no-result">No location found</div>
                       )}
                     </div>
                   )}
@@ -461,10 +455,7 @@ function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                 />
 
-                <button
-                  type="submit"
-                  disabled={loading || !selectedLocation}
-                >
+                <button type="submit" disabled={loading || !selectedLocation}>
                   {loading ? "Registering..." : "Register"}
                 </button>
               </form>
@@ -475,7 +466,7 @@ function Login() {
               className="switch-btn"
               onClick={switchToLogin}
             >
-              Already have an account? Login
+              Already have an account? <strong>Log in</strong>
             </button>
           </>
         )}
