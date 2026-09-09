@@ -17,7 +17,6 @@ function Home() {
   const [error, setError] = useState("");
 
   const [openDisplay, setOpenDisplay] = useState(false);
-  const [displayData, setDisplayData] = useState(null);
 
   const getLevel = (value, type) => {
     if (value === null || value === undefined || isNaN(value)) {
@@ -158,11 +157,25 @@ function Home() {
   }, []);
 
   useEffect(() => {
+    if (
+      location.lat === null ||
+      location.long === null ||
+      !Number.isFinite(location.lat) ||
+      !Number.isFinite(location.long)
+    ) {
+      return;
+    }
+
+    let isMounted = true;
+    let refreshTimeout = null;
+
     const getData = async () => {
       try {
-        setLoading(true);
-        setWeatherLoading(true);
-        setError("");
+        if (isMounted) {
+          setLoading(true);
+          setWeatherLoading(true);
+          setError("");
+        }
 
         const airQualityUrl =
           `https://air-quality-api.open-meteo.com/v1/air-quality?` +
@@ -192,27 +205,50 @@ function Home() {
         const airData = await airResponse.json();
         const weatherResult = await weatherResponse.json();
 
-        setApiData(airData);
-        setWeatherData(weatherResult);
+        if (isMounted) {
+          setApiData(airData);
+          setWeatherData(weatherResult);
+        }
       } catch (error) {
         console.error("Data Fetch Error:", error);
-        setApiData(null);
-        setWeatherData(null);
-        setError("Unable to load air quality and weather data.");
+
+        if (isMounted) {
+          setApiData(null);
+          setWeatherData(null);
+          setError("Unable to load air quality and weather data.");
+        }
       } finally {
-        setLoading(false);
-        setWeatherLoading(false);
+        if (isMounted) {
+          setLoading(false);
+          setWeatherLoading(false);
+        }
+      }
+
+      if (isMounted) {
+        const now = new Date();
+
+        const tomorrow = new Date(now);
+        tomorrow.setDate(now.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+
+        const millisecondsUntilTomorrow =
+          tomorrow.getTime() - now.getTime();
+
+        refreshTimeout = setTimeout(() => {
+          getData();
+        }, millisecondsUntilTomorrow);
       }
     };
 
-    if (
-      location.lat !== null &&
-      location.long !== null &&
-      Number.isFinite(location.lat) &&
-      Number.isFinite(location.long)
-    ) {
-      getData();
-    }
+    getData();
+
+    return () => {
+      isMounted = false;
+
+      if (refreshTimeout) {
+        clearTimeout(refreshTimeout);
+      }
+    };
   }, [location]);
 
   const currentWeatherIndex =
@@ -220,8 +256,8 @@ function Home() {
       ? Math.max(
           0,
           weatherData.hourly.time.findIndex(
-            (time) => new Date(time) >= new Date()
-          )
+            (time) => new Date(time) >= new Date(),
+          ),
         )
       : 0;
 
@@ -249,26 +285,23 @@ function Home() {
       return;
     }
 
-    setDisplayData({
-      apiData,
-      weatherData,
-      lat: location.lat,
-      long: location.long,
-      locationName: location.name,
-    });
-
     setOpenDisplay(true);
   };
 
   const handleCloseDisplay = () => {
     setOpenDisplay(false);
-    setDisplayData(null);
   };
 
-  if (openDisplay && displayData) {
+  if (openDisplay) {
     return (
       <Display
-        displayData={displayData}
+        displayData={{
+          apiData,
+          weatherData,
+          lat: location.lat,
+          long: location.long,
+          locationName: location.name,
+        }}
         onClose={handleCloseDisplay}
       />
     );
@@ -303,62 +336,124 @@ function Home() {
 
         {apiData && apiData.current && (
           <div className="air-quality-grid">
-            <div className={`air-quality-card ${getLevel(apiData.current.pm10, "pm10")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.pm10,
+                "pm10",
+              )}`}
+            >
               <p>PM10</p>
               <strong>{apiData.current.pm10}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.pm2_5, "pm25")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.pm2_5,
+                "pm25",
+              )}`}
+            >
               <p>PM2.5</p>
               <strong>{apiData.current.pm2_5}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.carbon_monoxide, "co")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.carbon_monoxide,
+                "co",
+              )}`}
+            >
               <p>Carbon Monoxide</p>
               <strong>{apiData.current.carbon_monoxide}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.nitrogen_dioxide, "no2")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.nitrogen_dioxide,
+                "no2",
+              )}`}
+            >
               <p>Nitrogen Dioxide</p>
               <strong>{apiData.current.nitrogen_dioxide}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.sulphur_dioxide, "so2")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.sulphur_dioxide,
+                "so2",
+              )}`}
+            >
               <p>Sulphur Dioxide</p>
               <strong>{apiData.current.sulphur_dioxide}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.ozone, "ozone")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.ozone,
+                "ozone",
+              )}`}
+            >
               <p>Ozone</p>
               <strong>{apiData.current.ozone}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.european_aqi, "europeanAqi")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.european_aqi,
+                "europeanAqi",
+              )}`}
+            >
               <p>European AQI</p>
               <strong>{apiData.current.european_aqi}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.us_aqi, "usAqi")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.us_aqi,
+                "usAqi",
+              )}`}
+            >
               <p>US AQI</p>
               <strong>{apiData.current.us_aqi}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.uv_index, "uv")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.uv_index,
+                "uv",
+              )}`}
+            >
               <p>UV Index</p>
               <strong>{apiData.current.uv_index}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.ammonia, "ammonia")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.ammonia,
+                "ammonia",
+              )}`}
+            >
               <p>Ammonia</p>
               <strong>{apiData.current.ammonia ?? "N/A"}</strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.aerosol_optical_depth, "aod")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.aerosol_optical_depth,
+                "aod",
+              )}`}
+            >
               <p>Aerosol Optical Depth</p>
-              <strong>{apiData.current.aerosol_optical_depth}</strong>
+              <strong>
+                {apiData.current.aerosol_optical_depth}
+              </strong>
             </div>
 
-            <div className={`air-quality-card ${getLevel(apiData.current.dust, "dust")}`}>
+            <div
+              className={`air-quality-card ${getLevel(
+                apiData.current.dust,
+                "dust",
+              )}`}
+            >
               <p>Dust</p>
               <strong>{apiData.current.dust}</strong>
             </div>
@@ -372,38 +467,69 @@ function Home() {
 
             {currentWeather && (
               <>
-                <div className={`air-quality-card ${getLevel(currentWeather.temperature, "temperature")}`}>
+                <div
+                  className={`air-quality-card ${getLevel(
+                    currentWeather.temperature,
+                    "temperature",
+                  )}`}
+                >
                   <p>Temperature</p>
-                  <strong>{currentWeather.temperature} °C</strong>
+                  <strong>
+                    {currentWeather.temperature} °C
+                  </strong>
                 </div>
 
-                <div className={`air-quality-card ${getLevel(currentWeather.humidity, "humidity")}`}>
+                <div
+                  className={`air-quality-card ${getLevel(
+                    currentWeather.humidity,
+                    "humidity",
+                  )}`}
+                >
                   <p>Humidity</p>
-                  <strong>{currentWeather.humidity} %</strong>
+                  <strong>
+                    {currentWeather.humidity} %
+                  </strong>
                 </div>
 
-                <div className={`air-quality-card ${getLevel(currentWeather.precipitation, "precipitation")}`}>
+                <div
+                  className={`air-quality-card ${getLevel(
+                    currentWeather.precipitation,
+                    "precipitation",
+                  )}`}
+                >
                   <p>Precipitation</p>
-                  <strong>{currentWeather.precipitation} mm</strong>
+                  <strong>
+                    {currentWeather.precipitation} mm
+                  </strong>
                 </div>
 
-                <div className={`air-quality-card ${getLevel(currentWeather.windSpeed, "wind")}`}>
+                <div
+                  className={`air-quality-card ${getLevel(
+                    currentWeather.windSpeed,
+                    "wind",
+                  )}`}
+                >
                   <p>Wind Speed</p>
-                  <strong>{currentWeather.windSpeed} km/h</strong>
+                  <strong>
+                    {currentWeather.windSpeed} km/h
+                  </strong>
                 </div>
               </>
             )}
           </div>
         )}
 
-        {apiData && weatherData && !loading && !weatherLoading && (
-          <button
-            className="open-display-btn"
-            onClick={handleOpenDisplay}
-          >
-            Start Display
-          </button>
-        )}
+        {apiData &&
+          weatherData &&
+          !loading &&
+          !weatherLoading && (
+            <button
+              className="open-display-btn"
+              onClick={handleOpenDisplay}
+            >
+              Start Display
+            </button>
+          )}
       </div>
     </section>
   );
