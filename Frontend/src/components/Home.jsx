@@ -1,323 +1,273 @@
 import { useEffect, useState } from "react";
-import Display from "./Display";
+import locations from "../Data/Data.json";
 import "../css/home.css";
 
+const limits = {
+  pm10: [50, 100],
+  pm2_5: [25, 50],
+  carbon_monoxide: [4000, 10000],
+  nitrogen_dioxide: [40, 100],
+  sulphur_dioxide: [20, 80],
+  ozone: [100, 180],
+  european_aqi: [20, 40],
+  us_aqi: [50, 100],
+  uv_index: [2, 5],
+  ammonia: [200, 400],
+  aerosol_optical_depth: [0.5, 1],
+  dust: [50, 100],
+  precipitation: [2, 10],
+  wind_speed_10m: [20, 40],
+};
+
+const airFields = [
+  ["PM10", "pm10"],
+  ["PM2.5", "pm2_5"],
+  ["Carbon Monoxide", "carbon_monoxide"],
+  ["Nitrogen Dioxide", "nitrogen_dioxide"],
+  ["Sulphur Dioxide", "sulphur_dioxide"],
+  ["Ozone", "ozone"],
+  ["European AQI", "european_aqi"],
+  ["US AQI", "us_aqi"],
+  ["UV Index", "uv_index"],
+  ["Ammonia", "ammonia"],
+  ["Aerosol Optical Depth", "aerosol_optical_depth"],
+  ["Dust", "dust"],
+];
+
+const weatherFields = [
+  ["Temperature", "temperature_2m", "°C"],
+  ["Humidity", "relative_humidity_2m", "%"],
+  ["Precipitation", "precipitation", "mm"],
+  ["Wind Speed", "wind_speed_10m", "km/h"],
+];
+
+const getLevel = (value, key) => {
+  if (value == null || !Number.isFinite(Number(value))) {
+    return "normal";
+  }
+
+  const number = Number(value);
+
+  if (key === "temperature_2m") {
+    if (number >= 18 && number <= 30) return "good";
+    if (number >= 10 && number <= 35) return "moderate";
+    return "danger";
+  }
+
+  if (key === "relative_humidity_2m") {
+    if (number >= 30 && number <= 60) return "good";
+    if (number >= 20 && number <= 70) return "moderate";
+    return "danger";
+  }
+
+  const range = limits[key];
+
+  if (!range) return "normal";
+  if (number <= range[0]) return "good";
+  if (number <= range[1]) return "moderate";
+
+  return "danger";
+};
+
 function Home() {
+  const [location, setLocation] = useState(null);
+  const [search, setSearch] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
   const [apiData, setApiData] = useState(null);
   const [weatherData, setWeatherData] = useState(null);
 
-  const [location, setLocation] = useState({
-    name: "",
-    lat: null,
-    long: null,
-  });
-
   const [loading, setLoading] = useState(false);
-  const [weatherLoading, setWeatherLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [openDisplay, setOpenDisplay] = useState(false);
-
-  const getLevel = (value, type) => {
-    if (value === null || value === undefined || isNaN(value)) {
-      return "normal";
-    }
-
-    const number = Number(value);
-
-    if (type === "pm10") {
-      if (number <= 50) return "good";
-      if (number <= 100) return "moderate";
-      return "danger";
-    }
-
-    if (type === "pm25") {
-      if (number <= 25) return "good";
-      if (number <= 50) return "moderate";
-      return "danger";
-    }
-
-    if (type === "co") {
-      if (number <= 4000) return "good";
-      if (number <= 10000) return "moderate";
-      return "danger";
-    }
-
-    if (type === "no2") {
-      if (number <= 40) return "good";
-      if (number <= 100) return "moderate";
-      return "danger";
-    }
-
-    if (type === "so2") {
-      if (number <= 20) return "good";
-      if (number <= 80) return "moderate";
-      return "danger";
-    }
-
-    if (type === "ozone") {
-      if (number <= 100) return "good";
-      if (number <= 180) return "moderate";
-      return "danger";
-    }
-
-    if (type === "europeanAqi") {
-      if (number <= 20) return "good";
-      if (number <= 40) return "moderate";
-      return "danger";
-    }
-
-    if (type === "usAqi") {
-      if (number <= 50) return "good";
-      if (number <= 100) return "moderate";
-      return "danger";
-    }
-
-    if (type === "uv") {
-      if (number <= 2) return "good";
-      if (number <= 5) return "moderate";
-      return "danger";
-    }
-
-    if (type === "ammonia") {
-      if (number <= 200) return "good";
-      if (number <= 400) return "moderate";
-      return "danger";
-    }
-
-    if (type === "aod") {
-      if (number <= 0.5) return "good";
-      if (number <= 1) return "moderate";
-      return "danger";
-    }
-
-    if (type === "dust") {
-      if (number <= 50) return "good";
-      if (number <= 100) return "moderate";
-      return "danger";
-    }
-
-    if (type === "temperature") {
-      if (number >= 18 && number <= 30) return "good";
-      if (number >= 10 && number <= 35) return "moderate";
-      return "danger";
-    }
-
-    if (type === "humidity") {
-      if (number >= 30 && number <= 60) return "good";
-      if (number >= 20 && number <= 70) return "moderate";
-      return "danger";
-    }
-
-    if (type === "precipitation") {
-      if (number <= 2) return "good";
-      if (number <= 10) return "moderate";
-      return "danger";
-    }
-
-    if (type === "wind") {
-      if (number <= 20) return "good";
-      if (number <= 40) return "moderate";
-      return "danger";
-    }
-
-    return "normal";
-  };
+  const filteredLocations = search.trim()
+    ? locations
+        .filter((item) =>
+          item.loc.toLowerCase().includes(search.trim().toLowerCase())
+        )
+        .slice(0, 8)
+    : [];
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
+    if (!location) return;
 
-    if (!storedUser) {
-      setError("User information not found. Please login again.");
-      return;
-    }
-
-    try {
-      const user = JSON.parse(storedUser);
-
-      if (
-        user.location_name &&
-        user.latitude !== null &&
-        user.latitude !== undefined &&
-        user.longitude !== null &&
-        user.longitude !== undefined
-      ) {
-        setLocation({
-          name: user.location_name,
-          lat: Number(user.latitude),
-          long: Number(user.longitude),
-        });
-      } else {
-        setError("No saved location found for your account.");
-      }
-    } catch (error) {
-      console.error("Failed to load user:", error);
-      setError("Unable to load your saved location.");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (
-      location.lat === null ||
-      location.long === null ||
-      !Number.isFinite(location.lat) ||
-      !Number.isFinite(location.long)
-    ) {
-      return;
-    }
-
-    let isMounted = true;
-    let refreshTimeout = null;
+    const controller = new AbortController();
+    let timeout;
 
     const getData = async () => {
-      try {
-        if (isMounted) {
-          setLoading(true);
-          setWeatherLoading(true);
-          setError("");
-        }
+      setLoading(true);
+      setError("");
 
-        const airQualityUrl =
-          `https://air-quality-api.open-meteo.com/v1/air-quality?` +
-          `latitude=${location.lat}&` +
-          `longitude=${location.long}&` +
-          `current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,european_aqi,us_aqi,uv_index,ammonia,aerosol_optical_depth,dust,alder_pollen,birch_pollen,grass_pollen,mugwort_pollen,olive_pollen,ragweed_pollen`;
+      try {
+        const coordinates = new URLSearchParams({
+          latitude: location.lat,
+          longitude: location.long,
+        });
+
+        const airUrl =
+          `https://air-quality-api.open-meteo.com/v1/air-quality?${coordinates}` +
+          `&current=${airFields.map((field) => field[1]).join(",")}`;
 
         const weatherUrl =
-          `https://api.open-meteo.com/v1/forecast?` +
-          `latitude=${location.lat}&` +
-          `longitude=${location.long}&` +
-          `hourly=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m`;
+          `https://api.open-meteo.com/v1/forecast?${coordinates}` +
+          `&current=${weatherFields.map((field) => field[1]).join(",")}`;
 
         const [airResponse, weatherResponse] = await Promise.all([
-          fetch(airQualityUrl),
-          fetch(weatherUrl),
+          fetch(airUrl, { signal: controller.signal }),
+          fetch(weatherUrl, { signal: controller.signal }),
         ]);
 
-        if (!airResponse.ok) {
-          throw new Error("Failed to fetch air quality data");
+        if (!airResponse.ok || !weatherResponse.ok) {
+          throw new Error("Failed to fetch environmental data");
         }
 
-        if (!weatherResponse.ok) {
-          throw new Error("Failed to fetch weather data");
-        }
+        const [airResult, weatherResult] = await Promise.all([
+          airResponse.json(),
+          weatherResponse.json(),
+        ]);
 
-        const airData = await airResponse.json();
-        const weatherResult = await weatherResponse.json();
+        if (controller.signal.aborted) return;
 
-        if (isMounted) {
-          setApiData(airData);
-          setWeatherData(weatherResult);
-        }
-      } catch (error) {
-        console.error("Data Fetch Error:", error);
+        setApiData(airResult.current);
+        setWeatherData(weatherResult.current);
+      } catch (err) {
+        if (controller.signal.aborted) return;
 
-        if (isMounted) {
-          setApiData(null);
-          setWeatherData(null);
-          setError("Unable to load air quality and weather data.");
-        }
+        console.error(err);
+        setApiData(null);
+        setWeatherData(null);
+        setError("Unable to load air quality and weather data.");
       } finally {
-        if (isMounted) {
+        if (!controller.signal.aborted) {
           setLoading(false);
-          setWeatherLoading(false);
         }
       }
 
-      if (isMounted) {
+      if (!controller.signal.aborted) {
         const now = new Date();
-
         const tomorrow = new Date(now);
+
         tomorrow.setDate(now.getDate() + 1);
         tomorrow.setHours(0, 0, 0, 0);
 
-        const millisecondsUntilTomorrow =
-          tomorrow.getTime() - now.getTime();
-
-        refreshTimeout = setTimeout(() => {
-          getData();
-        }, millisecondsUntilTomorrow);
+        timeout = setTimeout(
+          getData,
+          tomorrow.getTime() - now.getTime()
+        );
       }
     };
 
+    setApiData(null);
+    setWeatherData(null);
     getData();
 
     return () => {
-      isMounted = false;
-
-      if (refreshTimeout) {
-        clearTimeout(refreshTimeout);
-      }
+      controller.abort();
+      clearTimeout(timeout);
     };
   }, [location]);
 
-  const currentWeatherIndex =
-    weatherData?.hourly?.time?.length
-      ? Math.max(
-          0,
-          weatherData.hourly.time.findIndex(
-            (time) => new Date(time) >= new Date(),
-          ),
-        )
-      : 0;
+  const handleSearch = (e) => {
+    e.preventDefault();
 
-  const currentWeather =
-    weatherData?.hourly?.time?.length
-      ? {
-          temperature:
-            weatherData.hourly.temperature_2m[currentWeatherIndex],
-          humidity:
-            weatherData.hourly.relative_humidity_2m[currentWeatherIndex],
-          precipitation:
-            weatherData.hourly.precipitation[currentWeatherIndex],
-          windSpeed:
-            weatherData.hourly.wind_speed_10m[currentWeatherIndex],
-        }
-      : null;
+    const found = locations.find(
+      (item) =>
+        item.loc.toLowerCase() === search.trim().toLowerCase()
+    );
 
-  const handleOpenDisplay = () => {
-    if (
-      !apiData ||
-      !weatherData ||
-      location.lat === null ||
-      location.long === null
-    ) {
+    if (!found) {
+      setError("Please select a valid location.");
       return;
     }
 
-    setOpenDisplay(true);
+    if (
+      !Number.isFinite(Number(found.lat)) ||
+      !Number.isFinite(Number(found.long))
+    ) {
+      setError("Invalid location coordinates.");
+      return;
+    }
+
+    setLocation({
+      name: found.loc,
+      lat: Number(found.lat),
+      long: Number(found.long),
+    });
+
+    setSearch("");
+    setShowSuggestions(false);
+    setError("");
   };
 
-  const handleCloseDisplay = () => {
-    setOpenDisplay(false);
-  };
-
-  if (openDisplay) {
-    return (
-      <Display
-        displayData={{
-          apiData,
-          weatherData,
-          lat: location.lat,
-          long: location.long,
-          locationName: location.name,
-        }}
-        onClose={handleCloseDisplay}
-      />
-    );
-  }
+  const cards = [
+    ...airFields.map(([label, key]) => ({
+      label,
+      key,
+      value: apiData?.[key],
+      unit: "",
+    })),
+    ...weatherFields.map(([label, key, unit]) => ({
+      label,
+      key,
+      value: weatherData?.[key],
+      unit,
+    })),
+  ];
 
   return (
     <section className="home-section">
       <div className="selected-location-header">
-        <h1>{location.name || "Loading location..."}</h1>
+        <h1>{location?.name || "Select a location"}</h1>
       </div>
 
-      {error && (
-        <p className="status-message">
-          {error}
-        </p>
-      )}
+      <div className="location-search-container">
+        <form className="location-search-form" onSubmit={handleSearch}>
+          <div className="location-search-wrapper">
+            <input
+              type="text"
+              value={search}
+              placeholder="Search location..."
+              autoComplete="off"
+              aria-label="Search location"
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setShowSuggestions(true);
+              }}
+              onFocus={() => setShowSuggestions(true)}
+            />
+
+            {showSuggestions && search.trim() && (
+              <div className="location-suggestions">
+                {filteredLocations.length ? (
+                  filteredLocations.map((item, index) => (
+                    <button
+                      type="button"
+                      className="location-suggestion-item"
+                      key={`${item.loc}-${index}`}
+                      onClick={() => {
+                        setSearch(item.loc);
+                        setShowSuggestions(false);
+                      }}
+                    >
+                      {item.loc}
+                    </button>
+                  ))
+                ) : (
+                  <p className="location-no-results">
+                    No matching locations found
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <button type="submit" className="location-search-btn">
+            Search
+          </button>
+        </form>
+      </div>
+
+      {error && <p className="status-message">{error}</p>}
 
       <div className="air-quality">
         <h2>Air Quality</h2>
@@ -328,208 +278,21 @@ function Home() {
           </p>
         )}
 
-        {!loading && !apiData && !error && (
-          <p className="status-message">
-            Loading data...
-          </p>
-        )}
-
-        {apiData && apiData.current && (
+        {!loading && apiData && weatherData && (
           <div className="air-quality-grid">
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.pm10,
-                "pm10",
-              )}`}
-            >
-              <p>PM10</p>
-              <strong>{apiData.current.pm10}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.pm2_5,
-                "pm25",
-              )}`}
-            >
-              <p>PM2.5</p>
-              <strong>{apiData.current.pm2_5}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.carbon_monoxide,
-                "co",
-              )}`}
-            >
-              <p>Carbon Monoxide</p>
-              <strong>{apiData.current.carbon_monoxide}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.nitrogen_dioxide,
-                "no2",
-              )}`}
-            >
-              <p>Nitrogen Dioxide</p>
-              <strong>{apiData.current.nitrogen_dioxide}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.sulphur_dioxide,
-                "so2",
-              )}`}
-            >
-              <p>Sulphur Dioxide</p>
-              <strong>{apiData.current.sulphur_dioxide}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.ozone,
-                "ozone",
-              )}`}
-            >
-              <p>Ozone</p>
-              <strong>{apiData.current.ozone}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.european_aqi,
-                "europeanAqi",
-              )}`}
-            >
-              <p>European AQI</p>
-              <strong>{apiData.current.european_aqi}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.us_aqi,
-                "usAqi",
-              )}`}
-            >
-              <p>US AQI</p>
-              <strong>{apiData.current.us_aqi}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.uv_index,
-                "uv",
-              )}`}
-            >
-              <p>UV Index</p>
-              <strong>{apiData.current.uv_index}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.ammonia,
-                "ammonia",
-              )}`}
-            >
-              <p>Ammonia</p>
-              <strong>{apiData.current.ammonia ?? "N/A"}</strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.aerosol_optical_depth,
-                "aod",
-              )}`}
-            >
-              <p>Aerosol Optical Depth</p>
-              <strong>
-                {apiData.current.aerosol_optical_depth}
-              </strong>
-            </div>
-
-            <div
-              className={`air-quality-card ${getLevel(
-                apiData.current.dust,
-                "dust",
-              )}`}
-            >
-              <p>Dust</p>
-              <strong>{apiData.current.dust}</strong>
-            </div>
-
-            {weatherLoading && (
-              <div className="air-quality-card normal">
-                <p>Weather</p>
-                <strong>Loading...</strong>
+            {cards.map(({ label, key, value, unit }) => (
+              <div
+                key={key}
+                className={`air-quality-card ${getLevel(value, key)}`}
+              >
+                <p>{label}</p>
+                <strong>
+                  {value == null ? "N/A" : `${value}${unit ? ` ${unit}` : ""}`}
+                </strong>
               </div>
-            )}
-
-            {currentWeather && (
-              <>
-                <div
-                  className={`air-quality-card ${getLevel(
-                    currentWeather.temperature,
-                    "temperature",
-                  )}`}
-                >
-                  <p>Temperature</p>
-                  <strong>
-                    {currentWeather.temperature} °C
-                  </strong>
-                </div>
-
-                <div
-                  className={`air-quality-card ${getLevel(
-                    currentWeather.humidity,
-                    "humidity",
-                  )}`}
-                >
-                  <p>Humidity</p>
-                  <strong>
-                    {currentWeather.humidity} %
-                  </strong>
-                </div>
-
-                <div
-                  className={`air-quality-card ${getLevel(
-                    currentWeather.precipitation,
-                    "precipitation",
-                  )}`}
-                >
-                  <p>Precipitation</p>
-                  <strong>
-                    {currentWeather.precipitation} mm
-                  </strong>
-                </div>
-
-                <div
-                  className={`air-quality-card ${getLevel(
-                    currentWeather.windSpeed,
-                    "wind",
-                  )}`}
-                >
-                  <p>Wind Speed</p>
-                  <strong>
-                    {currentWeather.windSpeed} km/h
-                  </strong>
-                </div>
-              </>
-            )}
+            ))}
           </div>
         )}
-
-        {apiData &&
-          weatherData &&
-          !loading &&
-          !weatherLoading && (
-            <button
-              className="open-display-btn"
-              onClick={handleOpenDisplay}
-            >
-              Start Display
-            </button>
-          )}
       </div>
     </section>
   );
