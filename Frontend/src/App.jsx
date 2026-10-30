@@ -3,9 +3,7 @@ import { jwtDecode } from "jwt-decode";
 
 import Login from "./components/login";
 import Dashboard from "./components/Dashboard";
-import Home from "./components/Home";
-import ImageUpload from "./components/ImageUpload";
-import MyImages from "./components/Myimages";
+import Home from "./components/Home"
 
 import "./App.css";
 
@@ -70,8 +68,6 @@ function App() {
           }
         >
           <Route index element={<Home />} />
-          <Route path="upload" element={<ImageUpload />} />
-          <Route path="images" element={<MyImages />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

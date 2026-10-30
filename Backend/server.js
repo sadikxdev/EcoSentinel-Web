@@ -5,8 +5,6 @@ import authRoutes from "./src/routes/authRoute.js";
 import otpRoutes from "./src/routes/otpRoute.js";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
-import cloudinaryRoute from "./src/routes/cloudinaryRoute.js";
-import imageRoutes from "./src/routes/imageRoute.js";
 
 dotenv.config();
 
@@ -52,8 +50,6 @@ app.use((req, res, next) => {
 
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/otp", otpLimiter, otpRoutes);
-app.use("/api/cloudinary", cloudinaryRoute);
-app.use("/api/images", imageRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
