@@ -1,5 +1,6 @@
-import { useState } from "react";
-import locations from "../Data/Water.json";
+
+import { useEffect, useState } from "react";
+import { getWaterQuality } from "../api/waterApi";
 import "../css/water.css";
 
 const waterFields = [
@@ -25,7 +26,11 @@ const parseDate = (dateString) => {
   const [datePart] = dateString.split(" ");
   const [day, month, year] = datePart.split("-");
 
-  return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  return new Date(
+    Number(year),
+    Number(month) - 1,
+    Number(day)
+  ).getTime();
 };
 
 function Water() {
@@ -33,16 +38,62 @@ function Water() {
   const [location, setLocation] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
+  const [locations, setLocations] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!search.trim()) {
+      setLocations([]);
+      setLoading(false);
+      setError("");
+      return;
+    }
+
+    let ignore = false;
+
+    const timeout = setTimeout(async () => {
+      setLoading(true);
+      setError("");
+
+      try {
+        const data = await getWaterQuality(search.trim());
+
+        if (!ignore) {
+          setLocations(data);
+        }
+      } catch (err) {
+        if (!ignore) {
+          setLocations([]);
+          setError("Unable to fetch water quality data.");
+        }
+      } finally {
+        if (!ignore) {
+          setLoading(false);
+        }
+      }
+    }, 300);
+
+    return () => {
+      ignore = true;
+      clearTimeout(timeout);
+    };
+  }, [search]);
+
   const uniqueLocations = Array.from(
-    new Map(locations.map((item) => [item.station, item])).values(),
+    new Map(
+      locations.map((item) => [item.station, item])
+    ).values()
   );
 
   const filteredLocations = search.trim()
     ? uniqueLocations
         .filter((item) =>
           [item.station, item.district].some((value) =>
-            (value || "").toLowerCase().includes(search.trim().toLowerCase()),
-          ),
+            (value || "")
+              .toLowerCase()
+              .includes(search.trim().toLowerCase())
+          )
         )
         .slice(0, 8)
     : [];
@@ -50,7 +101,10 @@ function Water() {
   const getLatestRecord = (stationName) => {
     const records = locations
       .filter((item) => item.station === stationName)
-      .sort((a, b) => parseDate(b.sampleDate) - parseDate(a.sampleDate));
+      .sort(
+        (a, b) =>
+          parseDate(b.sampleDate) - parseDate(a.sampleDate)
+      );
 
     return records[0] || null;
   };
@@ -68,12 +122,20 @@ function Water() {
   const handleSearch = (e) => {
     e.preventDefault();
 
+    if (loading || error || !search.trim()) return;
+
     const found = uniqueLocations.find(
-      (item) => item.station.toLowerCase() === search.trim().toLowerCase(),
+      (item) =>
+        item.station?.toLowerCase() === search.trim().toLowerCase()
     );
 
     if (found) {
       selectLocation(found.station);
+      return;
+    }
+
+    if (uniqueLocations.length > 0) {
+      selectLocation(uniqueLocations[0].station);
     }
   };
 
@@ -81,7 +143,9 @@ function Water() {
     <section className="water-section">
       <div className="water-location-header">
         <div>
-          <span className="water-header-label">WATER MONITORING</span>
+          <span className="water-header-label">
+            WATER MONITORING
+          </span>
 
           <h1>Water Quality Monitoring</h1>
 
@@ -90,7 +154,10 @@ function Water() {
       </div>
 
       <div className="water-search-container">
-        <form className="water-search-form" onSubmit={handleSearch}>
+        <form
+          className="water-search-form"
+          onSubmit={handleSearch}
+        >
           <div className="water-search-wrapper">
             <input
               type="text"
@@ -107,17 +174,29 @@ function Water() {
 
             {showSuggestions && search.trim() && (
               <div className="water-suggestions">
-                {filteredLocations.length > 0 ? (
+                {loading ? (
+                  <p className="water-no-results">
+                    Searching...
+                  </p>
+                ) : error ? (
+                  <p className="water-no-results">
+                    {error}
+                  </p>
+                ) : filteredLocations.length > 0 ? (
                   filteredLocations.map((item) => (
                     <button
                       type="button"
                       className="water-suggestion-item"
                       key={item.station}
-                      onClick={() => selectLocation(item.station)}
+                      onClick={() =>
+                        selectLocation(item.station)
+                      }
                     >
                       <span>{item.station}</span>
 
-                      <small>{item.district || "Unknown district"}</small>
+                      <small>
+                        {item.district || "Unknown district"}
+                      </small>
                     </button>
                   ))
                 ) : (
@@ -129,7 +208,11 @@ function Water() {
             )}
           </div>
 
-          <button type="submit" className="water-search-btn">
+          <button
+            type="submit"
+            className="water-search-btn"
+            disabled={loading}
+          >
             Search
           </button>
         </form>
@@ -137,7 +220,10 @@ function Water() {
 
       <div className="water-location">
         <div className="water-location-info">
-          <span className="water-location-label">MONITORING LOCATION</span>
+          <span className="water-location-label">
+            MONITORING LOCATION
+          </span>
+
           <h2>{location?.station || "Select a location"}</h2>
         </div>
 
@@ -158,7 +244,9 @@ function Water() {
       <div className="water-monitoring-panel">
         <div className="water-panel-heading">
           <div>
-            <span className="water-panel-label">WATER ANALYSIS</span>
+            <span className="water-panel-label">
+              WATER ANALYSIS
+            </span>
 
             <h2>Water Quality Parameters</h2>
           </div>
@@ -171,36 +259,37 @@ function Water() {
             <h3>Select a water station</h3>
 
             <p>
-              Search for a water monitoring station to view its recorded water
-              quality measurements.
+              Search for a water monitoring station to view
+              its recorded water quality measurements.
             </p>
           </div>
         ) : (
-          <>
-            <div className="water-quality-grid">
-              {waterFields.map(([label, key, unit]) => {
-                const value = location[key];
+          <div className="water-quality-grid">
+            {waterFields.map(([label, key, unit]) => {
+              const value = location[key];
 
-                return (
-                  <div className="water-quality-card" key={key}>
-                    <p>{label}</p>
+              return (
+                <div
+                  className="water-quality-card"
+                  key={key}
+                >
+                  <p>{label}</p>
 
-                    <strong>
-                      {value != null
-                        ? `${value}${unit ? ` ${unit}` : ""}`
-                        : "Unavailable"}
-                    </strong>
+                  <strong>
+                    {value != null
+                      ? `${value}${unit ? ` ${unit}` : ""}`
+                      : "Unavailable"}
+                  </strong>
 
-                    <span className="water-card-status">
-                      {value != null
-                        ? "Recorded measurement"
-                        : "Data unavailable"}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-          </>
+                  <span className="water-card-status">
+                    {value != null
+                      ? "Recorded measurement"
+                      : "Data unavailable"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
         )}
       </div>
     </section>
