@@ -3,6 +3,9 @@ import cors from "cors";
 import dotenv from "dotenv";
 import helmet from "helmet";
 
+import airRoutes from "./src/routes/airRoutes.js";
+import waterRoutes from "./src/routes/waterRoutes.js";
+
 dotenv.config();
 
 const app = express();
@@ -12,6 +15,11 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+
+app.use("/api/air", airRoutes);
+app.use("/api/water", waterRoutes);
+
 
 app.use((req, res) => {
   res.status(404).json({

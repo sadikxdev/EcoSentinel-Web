@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import locations from "../Data/Air.json";
+import { getAirQuality } from "../api/airApi";
 import "../css/air.css";
 
 const airFields = [
@@ -87,75 +88,42 @@ function Air() {
   useEffect(() => {
     if (!location) return;
 
-    const controller = new AbortController();
-    let timeout;
+    let ignore = false;
 
     const fetchData = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const coordinates = new URLSearchParams({
-          latitude: location.lat,
-          longitude: location.long,
-        });
+        const result = await getAirQuality(location.lat, location.long);
 
-        const airUrl =
-          `https://air-quality-api.open-meteo.com/v1/air-quality?${coordinates}` +
-          `&current=${airFields.map((item) => item[1]).join(",")}`;
+        if (ignore) return;
 
-        const weatherUrl =
-          `https://api.open-meteo.com/v1/forecast?${coordinates}` +
-          `&current=${weatherFields.map((item) => item[1]).join(",")}`;
-
-        const [airResponse, weatherResponse] = await Promise.all([
-          fetch(airUrl, { signal: controller.signal }),
-          fetch(weatherUrl, { signal: controller.signal }),
-        ]);
-
-        if (!airResponse.ok || !weatherResponse.ok) {
-          throw new Error("Request failed");
-        }
-
-        const [airResult, weatherResult] = await Promise.all([
-          airResponse.json(),
-          weatherResponse.json(),
-        ]);
-
-        if (controller.signal.aborted) return;
-
-        setAirData(airResult.current);
-        setWeatherData(weatherResult.current);
+        setAirData(result.air);
+        setWeatherData(result.weather);
       } catch (err) {
-        if (controller.signal.aborted) return;
+        if (ignore) return;
 
         setAirData(null);
         setWeatherData(null);
+
         setError(
           "Unable to load environmental data. Check your internet connection.",
         );
       } finally {
-        if (!controller.signal.aborted) {
+        if (!ignore) {
           setLoading(false);
         }
       }
-
-      if (controller.signal.aborted) return;
-
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-
-      timeout = setTimeout(fetchData, tomorrow.getTime() - Date.now());
     };
 
     setAirData(null);
     setWeatherData(null);
+
     fetchData();
 
     return () => {
-      controller.abort();
-      clearTimeout(timeout);
+      ignore = true;
     };
   }, [location]);
 
